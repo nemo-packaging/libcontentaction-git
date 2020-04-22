@@ -1,37 +1,48 @@
 # $Id$
-# Maintainer: TheKit <nekit1000 at gmail.com>
+# Contributor: TheKit <nekit1000 at gmail.com>
+# Contributor: Bart Ribbers <bribbers@disroot.org>
+# Contributor: Alexey Andreyev <aa13q@ya.ru>
 # Maintainer: James Kittsmiller (AJSlye) <james@nulogicsystems.com>
 
-pkgname=libcontentaction-git
+_host="git.sailfishos.org"
+_project=mer-core
+_basename=nemo-qml-plugin-contentaction
+_branch=master
+
+_gitname=lib${_basename//nemo-qml-plugin-/}
+pkgname=$_basename-git
+
 pkgver=0.3.14.r0.gd5445f1
+
 pkgrel=1
 pkgdesc="Library for associating content with actions"
 arch=('x86_64' 'aarch64')
-url="https://git.sailfishos.org/mer-core/libcontentaction"
-license=('GPL')
-depends=('python' 'qt5-base' 'qt5-systems' 'mlite')
-makedepends=('git' 'qt5-tools')
+url="https://$_host/$_project/$_gitname#branch=$_branch"
+license=('LGPL-2.1-or-later')
+depends=('qt5-systems' 'qt5-mlite')
+makedepends=('git')
 provides=("${pkgname%-git}")
 conflicts=("${pkgname%-git}")
-source=('git+https://git.sailfishos.org/mer-core/libcontentaction.git')
+source=("${pkgname}::git+${url}")
 md5sums=('SKIP')
 
 pkgver() {
-	cd "$srcdir/${pkgname%-git}"
-	git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g'
-}
-
-prepare() {
-	cd "$srcdir/${pkgname%-git}"
+  cd "${srcdir}/${pkgname}"
+  ( set -o pipefail
+    git describe --long --tags | sed 's/\([^-]*-g\)/r\1/;s/-/./g' ||
+    printf "r%s.%s" "$(git rev-list --count HEAD)" "$(git rev-parse --short HEAD)"
+  ) 2>/dev/null
 }
 
 build() {
-	cd "$srcdir/${pkgname%-git}"
-	qmake PREFIX=/usr
-	make
+  cd "${srcdir}/${pkgname}"
+  qmake
+  make
 }
 
 package() {
-	cd "$srcdir/${pkgname%-git}"
-	make INSTALL_ROOT="$pkgdir/" install
+  cd "${srcdir}/${pkgname}"
+  make INSTALL_ROOT="${pkgdir}" install
+  # Remove tests
+  rm -r "$pkgdir/opt"
 }
